@@ -1,0 +1,28 @@
+name: main
+
+on:
+  push:
+    branches: ['*']
+  workflow_dispatch:
+    branches: ['*']
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+
+      # Renaming the workflow reset the github.run_number, so to keep things
+      # consecutive, we compute an offset value.
+      - name: Set release number
+        id: release
+        run: 'echo "release=$(expr ${{ github.run_number }} + 20)" >> $GITHUB_OUTPUT'
+    
+      - name: Release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v1
+        with:
+          name: ${{ steps.release.outputs.release }}
+          tag_name: r${{ steps.release.outputs.release }}
+          fail_on_unmatched_files: true
+          files: packages/*-${{ steps.release.outputs.release }}.zip
